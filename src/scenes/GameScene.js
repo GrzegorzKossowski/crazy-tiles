@@ -290,6 +290,42 @@ export default class GameScene extends Phaser.Scene {
     this._executeMove(move.row, this.activeCol, false, 'p2')
   }
 
+  // ── Game over banner ───────────────────────────────────────────────────────
+
+  _showGameOverBanner() {
+    const cx = GAME_WIDTH / 2
+    const cy = GAME_HEIGHT / 2
+
+    // Semi-transparent dark overlay
+    const overlay = this.add.rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.55)
+      .setDepth(20)
+
+    // Banner background
+    const banner = this.add.rectangle(cx, cy, 480, 110, 0x11112a)
+      .setStrokeStyle(2, 0xf0c040)
+      .setDepth(21)
+
+    // "Brak ruchów" line
+    this.add.text(cx, cy - 26, 'Brak dostępnych ruchów', {
+      fontSize: '18px', color: '#aaaacc', fontFamily: 'monospace'
+    }).setOrigin(0.5).setDepth(22)
+
+    // Big "KONIEC GRY" line
+    this.add.text(cx, cy + 12, 'KONIEC GRY', {
+      fontSize: '34px', color: '#f0c040', fontFamily: 'monospace', fontStyle: 'bold'
+    }).setOrigin(0.5).setDepth(22)
+
+    // Pulse animation on banner
+    this.tweens.add({
+      targets: banner,
+      scaleX: 1.02, scaleY: 1.02,
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    })
+  }
+
   // ── Game over ──────────────────────────────────────────────────────────────
 
   _endGame() {
@@ -299,8 +335,9 @@ export default class GameScene extends Phaser.Scene {
     this._rowIndicator.setVisible(false)
     this._colIndicator.setVisible(false)
     this._updateScoreBar()
+    this._showGameOverBanner()
 
-    this.time.delayedCall(2000, () => {
+    this.time.delayedCall(2500, () => {
       this.scene.start('ResultScene', {
         p1Score: this.p1Score,
         p2Score: this.p2Score,
