@@ -200,20 +200,29 @@ export default class MenuScene extends Phaser.Scene {
     const closeBtn = this.add.text(0, 140, '[ Zamknij ]', {
       fontSize: '18px', color: '#f0c040', fontFamily: 'monospace'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-    closeBtn.on('pointerdown', () => panel.setVisible(false))
+    closeBtn.on('pointerdown', () => { panel.setVisible(false); this._setInputsVisible(true) })
     panel.add(closeBtn)
     return panel
   }
 
   // ── Panel toggles ──────────────────────────────────────────────────────────
 
+  _setInputsVisible(visible) {
+    const v = visible ? '' : 'none'
+    if (this._p1Input) this._p1Input.style.display = v
+    if (this._p2Input) this._p2Input.style.display = v
+  }
+
   _showDifficulty() {
     this._aboutPanel.setVisible(false)
+    this._setInputsVisible(true)
     this._diffPanel.setVisible(!this._diffPanel.visible)
   }
 
   _showAbout() {
     this._diffPanel.setVisible(false)
-    this._aboutPanel.setVisible(!this._aboutPanel.visible)
+    const opening = !this._aboutPanel.visible
+    this._aboutPanel.setVisible(opening)
+    this._setInputsVisible(!opening)
   }
 }
