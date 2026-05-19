@@ -1,6 +1,16 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  test: {
+    environment: 'jsdom',
+    include: ['src/**/*.test.js'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      include: ['src/**/*.js'],
+      exclude: ['src/scenes/**', 'src/main.js']
+    }
+  },
   base: './',
   build: {
     outDir: 'dist',
