@@ -163,11 +163,11 @@ export default class GameScene extends Phaser.Scene {
 
     // ▶ points right, placed left of board
     this._rowIndicator = this.add.text(BOARD_OFFSET_X - 26, 0, '▶', indStyle)
-      .setOrigin(0.5).setVisible(false)
+      .setOrigin(0.5).setDepth(5).setVisible(false)
 
     // ▲ points up into board, placed below board
     this._colIndicator = this.add.text(0, BOARD_OFFSET_Y + bw + 14, '▲', indStyle)
-      .setOrigin(0.5).setVisible(false)
+      .setOrigin(0.5).setDepth(5).setVisible(false)
   }
 
   _setZone(index, isRow) {
