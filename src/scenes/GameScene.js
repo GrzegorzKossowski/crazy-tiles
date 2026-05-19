@@ -15,20 +15,9 @@ const STEP = GAME_TILE_SIZE + GAME_TILE_GAP
 function tileX(col) { return BOARD_OFFSET_X + col * STEP + GAME_TILE_SIZE / 2 }
 function tileY(row) { return BOARD_OFFSET_Y + row * STEP + GAME_TILE_SIZE / 2 }
 
-// Color for a tile value: green (positive) or red (negative), brightness by magnitude
+// Uniform dark green (positive) or dark red (negative)
 function tileColor(value) {
-  const t = (Math.abs(value) - 1) / 9  // 0..1
-  if (value > 0) {
-    const r = Math.round(0x1a + t * (0x10 - 0x1a))
-    const g = Math.round(0x6a + t * (0xff - 0x6a))
-    const b = Math.round(0x1a + t * (0x10 - 0x1a))
-    return (r << 16) | (g << 8) | b
-  } else {
-    const r = Math.round(0x8a + t * (0xff - 0x8a))
-    const g = Math.round(0x1a)
-    const b = Math.round(0x1a)
-    return (r << 16) | (g << 8) | b
-  }
+  return value > 0 ? 0x1a4a1a : 0x4a1a1a
 }
 
 const STATE = { P1_TURN: 'P1_TURN', P2_TURN: 'P2_TURN', AI_THINKING: 'AI_THINKING', GAME_OVER: 'GAME_OVER' }
@@ -52,6 +41,7 @@ export default class GameScene extends Phaser.Scene {
     this._buildScoreBar()
     this._buildBoard()
     this._buildZoneHighlight()
+    this._buildIndicators()
     this._buildThinkingLabel()
 
     this._refreshBoard()
@@ -123,7 +113,7 @@ export default class GameScene extends Phaser.Scene {
           .setInteractive({ useHandCursor: true })
 
         const txt = this.add.text(x, y, '', {
-          fontSize: '18px', fontStyle: 'bold',
+          fontSize: '26px', fontStyle: 'bold',
           color: '#ffffff', fontFamily: 'monospace'
         }).setOrigin(0.5)
 
@@ -146,7 +136,7 @@ export default class GameScene extends Phaser.Scene {
           txt.setVisible(false)
         } else {
           bg.setVisible(true).setFillStyle(tileColor(v))
-          txt.setVisible(true).setText(v > 0 ? `+${v}` : `${v}`)
+          txt.setVisible(true).setText(Math.abs(v))
         }
       }
     }
@@ -166,14 +156,31 @@ export default class GameScene extends Phaser.Scene {
     ).setVisible(false)
   }
 
+  _buildIndicators() {
+    const bw = BOARD_SIZE * STEP - GAME_TILE_GAP
+    const indStyle = { fontSize: '22px', color: '#ffdd57', fontFamily: 'monospace', fontStyle: 'bold' }
+
+    // ▶ points right, placed left of board
+    this._rowIndicator = this.add.text(BOARD_OFFSET_X - 26, 0, '▶', indStyle)
+      .setOrigin(0.5).setVisible(false)
+
+    // ▲ points up into board, placed below board
+    this._colIndicator = this.add.text(0, BOARD_OFFSET_Y + bw + 14, '▲', indStyle)
+      .setOrigin(0.5).setVisible(false)
+  }
+
   _setZone(index, isRow) {
     const bw = BOARD_SIZE * STEP - GAME_TILE_GAP
     if (isRow) {
       this._rowHighlight.setY(tileY(index)).setVisible(true)
       this._colHighlight.setVisible(false)
+      this._rowIndicator.setY(tileY(index)).setVisible(true)
+      this._colIndicator.setVisible(false)
     } else {
       this._colHighlight.setX(tileX(index)).setVisible(true)
       this._rowHighlight.setVisible(false)
+      this._colIndicator.setX(tileX(index)).setVisible(true)
+      this._rowIndicator.setVisible(false)
     }
     this._setClickable(index, isRow)
   }
@@ -289,6 +296,8 @@ export default class GameScene extends Phaser.Scene {
     this.state = STATE.GAME_OVER
     this._rowHighlight.setVisible(false)
     this._colHighlight.setVisible(false)
+    this._rowIndicator.setVisible(false)
+    this._colIndicator.setVisible(false)
     this._updateScoreBar()
 
     this.time.delayedCall(2000, () => {
