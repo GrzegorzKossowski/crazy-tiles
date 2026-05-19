@@ -64,4 +64,15 @@ describe('getBestMove', () => {
     const move = getBestMove(board, 7, 1)
     expect(move.row).toBe(3) // only positive tile
   })
+
+  it('blocking bonus: prefers game-ending move when CPU is winning', () => {
+    // Col 0: row 2 scores 5 but leaves P1 able to move (tile at 2,4 remains)
+    //        row 7 scores 3 but row 7 is empty → blocks P1 → game ends
+    // With cpuScore=120, p1Score=100: blocking margin = 120+3-100 = 23
+    // → blocking score = 3+23 = 26 > non-blocking score = 5
+    const data = makeGrid({ '2,0': 5, '2,4': 1, '7,0': 3 })
+    const board = new Board(data)
+    const move = getBestMove(board, 0, 1, 120, 100)
+    expect(move.row).toBe(7) // lower-scoring but game-ending move wins
+  })
 })

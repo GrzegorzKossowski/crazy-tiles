@@ -1,4 +1,4 @@
-import { findMatchingTiles } from './GameLogic.js'
+import { findMatchingTiles, canMove } from './GameLogic.js'
 
 // Preview score for a move without mutating the board
 function previewScore(board, row, col, isRow) {
@@ -60,10 +60,22 @@ function minimax(board, index, isCPUTurn, depth, alpha, beta) {
 }
 
 // Returns {row} — the row index CPU should pick in the given colIndex.
-// depth: 1 = easy (greedy), 5 = medium, 11 = hard
-export function getBestMove(board, colIndex, depth) {
+// cpuScore / p1Score: current totals, used to value game-ending moves correctly.
+// depth: 2=easy (Blamaż), 5=medium (Cwaniak), 9=hard (Tytan)
+export function getBestMove(board, colIndex, depth, cpuScore = 0, p1Score = 0) {
   const positions = board.getAvailableInCol(colIndex)
   if (!positions.length) return null
+
+  // Easy personality (Blamaż): 30% chance to panic-block when it can win right now.
+  // Mimics a human who grabs a sure win instead of fishing for more points.
+  if (depth <= 2 && Math.random() < 0.30) {
+    const panicBlock = positions.find(({ row }) => {
+      const clone = board.clone()
+      const delta = clone.collectTiles(findMatchingTiles(clone, row, colIndex, false))
+      return !canMove(clone, row, true) && (cpuScore + delta) > p1Score
+    })
+    if (panicBlock) return { row: panicBlock.row }
+  }
 
   // Sort top-level moves by immediate gain (best-first for tighter alpha-beta)
   positions.sort((a, b) =>
@@ -79,7 +91,15 @@ export function getBestMove(board, colIndex, depth) {
     const delta = clone.collectTiles(findMatchingTiles(clone, row, colIndex, false))
     // P1 responds next; start alpha-beta with full window
     const childV = minimax(clone, row, false, depth - 1, -Infinity, Infinity)
-    const score = delta + childV   // CPU's gain + future advantage (CPU - P1)
+    let score = delta + childV
+
+    // Blocking bonus: minimax returns 0 for game-ending moves (no future turns),
+    // but locking in a winning margin has real value — add it explicitly.
+    if (!canMove(clone, row, true)) {
+      const margin = (cpuScore + delta) - p1Score
+      if (margin > 0) score += margin
+    }
+
     if (score > bestScore) { bestScore = score; bestRow = row }
   }
 

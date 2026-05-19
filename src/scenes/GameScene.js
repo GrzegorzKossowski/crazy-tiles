@@ -275,7 +275,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _runAI() {
-    const move = getBestMove(this.board, this.activeCol, this.depth)
+    const move = getBestMove(this.board, this.activeCol, this.depth, this.p2Score, this.p1Score)
     this._showThinking(false)
     if (!move) {
       this._endGame()
