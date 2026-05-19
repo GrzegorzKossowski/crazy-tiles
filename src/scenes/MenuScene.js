@@ -3,20 +3,6 @@ import { GAME_WIDTH, GAME_HEIGHT, CPU_NAMES, DEFAULT_P1_NAME, DEFAULT_P2_NAME } 
 
 const CX = GAME_WIDTH / 2
 
-const INPUT_STYLE = [
-  'background:#1a2040',
-  'border:2px solid #334466',
-  'border-radius:4px',
-  'color:#ffffff',
-  'font-family:monospace',
-  'font-size:17px',
-  'padding:5px 8px',
-  'text-align:center',
-  'width:150px',
-  'outline:none',
-  'box-sizing:border-box'
-].join(';')
-
 function makeButton(scene, x, y, w, h, label, onClick) {
   const bg = scene.add.rectangle(x, y, w, h, 0x334466)
     .setInteractive({ useHandCursor: true })
@@ -29,10 +15,27 @@ function makeButton(scene, x, y, w, h, label, onClick) {
   return bg
 }
 
-function labelText(scene, x, y, str) {
-  return scene.add.text(x, y, str, {
-    fontSize: '13px', color: '#8888aa', fontFamily: 'monospace'
-  }).setOrigin(0.5, 1)
+function ensureInputCSS() {
+  if (document.getElementById('ct-input-style')) return
+  const s = document.createElement('style')
+  s.id = 'ct-input-style'
+  s.textContent = `
+    .ct-input {
+      position: fixed;
+      background: #1a2040;
+      border: 2px solid #334466;
+      border-radius: 4px;
+      color: #ffffff;
+      font-family: monospace;
+      text-align: center;
+      padding: 4px 6px;
+      outline: none;
+      box-sizing: border-box;
+      z-index: 10;
+    }
+    .ct-input:focus { border-color: #6688cc; }
+  `
+  document.head.appendChild(s)
 }
 
 export default class MenuScene extends Phaser.Scene {
@@ -50,23 +53,17 @@ export default class MenuScene extends Phaser.Scene {
       fontSize: '16px', color: '#8888aa', fontFamily: 'monospace'
     }).setOrigin(0.5)
 
-    // Player name inputs
-    labelText(this, CX - 105, 222, 'Gracz 1')
-    labelText(this, CX + 105, 222, 'Gracz 2')
+    // Labels above inputs (Phaser text)
+    this.add.text(CX - 105, 222, 'Gracz 1', {
+      fontSize: '13px', color: '#8888aa', fontFamily: 'monospace'
+    }).setOrigin(0.5, 1)
+    this.add.text(CX + 105, 222, 'Gracz 2', {
+      fontSize: '13px', color: '#8888aa', fontFamily: 'monospace'
+    }).setOrigin(0.5, 1)
 
-    this._p1Input = this.add.dom(CX - 105, 245, 'input', INPUT_STYLE)
-    this._p1Input.node.type = 'text'
-    this._p1Input.node.maxLength = 14
-    this._p1Input.node.value = localStorage.getItem('ct_p1Name') || DEFAULT_P1_NAME
-
-    this._p2Input = this.add.dom(CX + 105, 245, 'input', INPUT_STYLE)
-    this._p2Input.node.type = 'text'
-    this._p2Input.node.maxLength = 14
-    this._p2Input.node.value = localStorage.getItem('ct_p2Name') || DEFAULT_P2_NAME
-
-    this._p2Hint = this.add.text(CX + 105, 262, '', {
-      fontSize: '12px', color: '#666688', fontFamily: 'monospace'
-    }).setOrigin(0.5, 0).setVisible(false)
+    // Native HTML inputs positioned over canvas
+    this._createInputs()
+    this.events.once('shutdown', () => this._destroyInputs())
 
     // Main buttons
     makeButton(this, CX, 318, 260, 50, 'Player vs Player', () => this._startPvP())
@@ -80,10 +77,47 @@ export default class MenuScene extends Phaser.Scene {
     this._aboutPanel.setVisible(false)
   }
 
-  // ── Input helpers ──────────────────────────────────────────────────────────
+  // ── Native HTML inputs ─────────────────────────────────────────────────────
 
-  _getP1Name() { return this._p1Input.node.value.trim() || DEFAULT_P1_NAME }
-  _getP2Name() { return this._p2Input.node.value.trim() || DEFAULT_P2_NAME }
+  _createInputs() {
+    ensureInputCSS()
+    const canvas = this.sys.game.canvas
+    const rect   = canvas.getBoundingClientRect()
+    const sx = rect.width  / GAME_WIDTH
+    const sy = rect.height / GAME_HEIGHT
+
+    const w  = Math.round(150 * sx)
+    const h  = Math.round(34  * sy)
+    const fs = Math.round(16  * sx)
+
+    const makeInput = (gameX, gameY, storageKey, defaultVal) => {
+      const inp = document.createElement('input')
+      inp.type       = 'text'
+      inp.maxLength  = 14
+      inp.value      = localStorage.getItem(storageKey) || defaultVal
+      inp.className  = 'ct-input'
+      inp.style.left = `${Math.round(rect.left + gameX * sx - w / 2)}px`
+      inp.style.top  = `${Math.round(rect.top  + gameY * sy - h / 2)}px`
+      inp.style.width    = `${w}px`
+      inp.style.height   = `${h}px`
+      inp.style.fontSize = `${fs}px`
+      document.body.appendChild(inp)
+      return inp
+    }
+
+    this._p1Input = makeInput(CX - 105, 245, 'ct_p1Name', DEFAULT_P1_NAME)
+    this._p2Input = makeInput(CX + 105, 245, 'ct_p2Name', DEFAULT_P2_NAME)
+  }
+
+  _destroyInputs() {
+    this._p1Input?.remove()
+    this._p2Input?.remove()
+    this._p1Input = null
+    this._p2Input = null
+  }
+
+  _getP1Name() { return this._p1Input?.value.trim() || DEFAULT_P1_NAME }
+  _getP2Name() { return this._p2Input?.value.trim() || DEFAULT_P2_NAME }
 
   // ── Start game ─────────────────────────────────────────────────────────────
 
@@ -113,12 +147,12 @@ export default class MenuScene extends Phaser.Scene {
 
     const diffs = [
       { depth: 1, x: -110 },
-      { depth: 3, x: 0   },
-      { depth: 5, x: 110 }
+      { depth: 3, x: 0    },
+      { depth: 5, x: 110  }
     ]
 
     for (const d of diffs) {
-      const cpuName = CPU_NAMES[d.depth]
+      const cpuName   = CPU_NAMES[d.depth]
       const diffLabel = d.depth === 1 ? 'Easy' : d.depth === 3 ? 'Medium' : 'Hard'
 
       const btn = this.add.rectangle(d.x, 8, 96, 58, 0x334466)
@@ -133,11 +167,7 @@ export default class MenuScene extends Phaser.Scene {
 
       btn.on('pointerover', () => btn.setFillStyle(0x4466aa))
       btn.on('pointerout',  () => btn.setFillStyle(0x334466))
-      btn.on('pointerdown', () => {
-        // Preview CPU name in P2 input briefly, then start
-        this._p2Input.node.value = cpuName
-        this._startPvC(d.depth)
-      })
+      btn.on('pointerdown', () => this._startPvC(d.depth))
     }
 
     return panel
@@ -170,7 +200,6 @@ export default class MenuScene extends Phaser.Scene {
     const closeBtn = this.add.text(0, 140, '[ Zamknij ]', {
       fontSize: '18px', color: '#f0c040', fontFamily: 'monospace'
     }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-
     closeBtn.on('pointerdown', () => panel.setVisible(false))
     panel.add(closeBtn)
     return panel
@@ -181,10 +210,6 @@ export default class MenuScene extends Phaser.Scene {
   _showDifficulty() {
     this._aboutPanel.setVisible(false)
     this._diffPanel.setVisible(!this._diffPanel.visible)
-    // Restore P2 input when closing difficulty panel
-    if (!this._diffPanel.visible) {
-      this._p2Input.node.value = localStorage.getItem('ct_p2Name') || DEFAULT_P2_NAME
-    }
   }
 
   _showAbout() {
