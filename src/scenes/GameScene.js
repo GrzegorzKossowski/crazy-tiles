@@ -43,6 +43,7 @@ export default class GameScene extends Phaser.Scene {
     this._buildBoard()
     this._buildZoneHighlight()
     this._buildIndicators()
+    this._buildHistoryPanels()
     this._buildThinkingOverlay()
 
     this._refreshBoard()
@@ -197,6 +198,61 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  // ── Move history panels ────────────────────────────────────────────────────
+
+  _buildHistoryPanels() {
+    const MAX = 18
+    const ENTRY_H = 28
+    const bw = BOARD_SIZE * STEP - GAME_TILE_GAP
+    const top = BOARD_OFFSET_Y
+    const panelW = BOARD_OFFSET_X - 14
+    const lx = Math.round(BOARD_OFFSET_X / 2)                           // ≈ 60
+    const rx = BOARD_OFFSET_X + bw + Math.round((GAME_WIDTH - BOARD_OFFSET_X - bw) / 2) // ≈ 740
+
+    // panel backgrounds
+    this.add.rectangle(lx, top + bw / 2, panelW, bw, 0x080812)
+    this.add.rectangle(rx, top + bw / 2, panelW, bw, 0x080812)
+
+    // player name labels
+    this.add.text(lx, top + 5, this.p1Name, {
+      fontSize: '12px', color: '#44aaff', fontFamily: 'monospace'
+    }).setOrigin(0.5, 0)
+    this.add.text(rx, top + 5, this.p2Name, {
+      fontSize: '12px', color: '#ff8844', fontFamily: 'monospace'
+    }).setOrigin(0.5, 0)
+
+    // separator lines
+    this.add.rectangle(lx, top + 23, panelW - 6, 1, 0x334466)
+    this.add.rectangle(rx, top + 23, panelW - 6, 1, 0x334466)
+
+    // pre-create text slots
+    const style = { fontSize: '16px', fontFamily: 'monospace', fontStyle: 'bold' }
+    this._p1HistText = []
+    this._p2HistText = []
+    for (let i = 0; i < MAX; i++) {
+      const y = top + 29 + i * ENTRY_H
+      this._p1HistText.push(this.add.text(lx, y, '', style).setOrigin(0.5, 0))
+      this._p2HistText.push(this.add.text(rx, y, '', style).setOrigin(0.5, 0))
+    }
+
+    this._p1History = []
+    this._p2History = []
+  }
+
+  _refreshHistory() {
+    const fill = (history, texts) => {
+      const offset = Math.max(0, history.length - texts.length)
+      texts.forEach((t, i) => {
+        const v = history[offset + i]
+        if (v === undefined) { t.setText(''); return }
+        t.setText(String(Math.abs(v)))
+         .setColor(v >= 0 ? '#32cd32' : '#ff4444')
+      })
+    }
+    fill(this._p1History, this._p1HistText)
+    fill(this._p2History, this._p2HistText)
+  }
+
   // ── Thinking overlay ───────────────────────────────────────────────────────
 
   _buildThinkingOverlay() {
@@ -232,13 +288,16 @@ export default class GameScene extends Phaser.Scene {
 
     if (player === 'p1') {
       this.p1Score += scoreDelta
+      this._p1History.push(scoreDelta)
       this.activeCol = nextConstraint
     } else {
       this.p2Score += scoreDelta
+      this._p2History.push(scoreDelta)
       this.activeRow = nextConstraint
     }
 
     this._refreshBoard()
+    this._refreshHistory()
 
     // Check if next player can move
     if (player === 'p1') {

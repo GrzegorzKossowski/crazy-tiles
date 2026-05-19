@@ -69,12 +69,19 @@ export function getBestMove(board, colIndex, depth, cpuScore = 0, p1Score = 0) {
   // Easy personality (Blamaż): 30% chance to panic-block when it can win right now.
   // Mimics a human who grabs a sure win instead of fishing for more points.
   if (depth <= 2 && Math.random() < 0.30) {
-    const panicBlock = positions.find(({ row }) => {
+    const blocking = positions.filter(({ row }) => {
       const clone = board.clone()
       const delta = clone.collectTiles(findMatchingTiles(clone, row, colIndex, false))
       return !canMove(clone, row, true) && (cpuScore + delta) > p1Score
     })
-    if (panicBlock) return { row: panicBlock.row }
+    if (blocking.length > 0) {
+      // Among valid panic-blocks pick the one with the highest immediate score
+      blocking.sort((a, b) =>
+        previewScore(board, b.row, colIndex, false) -
+        previewScore(board, a.row, colIndex, false)
+      )
+      return { row: blocking[0].row }
+    }
   }
 
   // Sort top-level moves by immediate gain (best-first for tighter alpha-beta)
