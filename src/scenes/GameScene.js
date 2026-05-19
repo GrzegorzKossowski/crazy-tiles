@@ -43,7 +43,7 @@ export default class GameScene extends Phaser.Scene {
     this._buildBoard()
     this._buildZoneHighlight()
     this._buildIndicators()
-    this._buildThinkingLabel()
+    this._buildThinkingOverlay()
 
     this._refreshBoard()
     this._setZone(this.activeRow, true)
@@ -197,29 +197,58 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // ── Thinking label ─────────────────────────────────────────────────────────
+  // ── Thinking overlay (spinner) ─────────────────────────────────────────────
 
-  _buildThinkingLabel() {
-    this._thinkingLabel = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT / 2, '', {
-      fontSize: '28px', color: '#ffdd57', fontFamily: 'monospace', fontStyle: 'bold'
-    }).setOrigin(0.5).setDepth(10).setVisible(false)
+  _buildThinkingOverlay() {
+    const bw = BOARD_SIZE * STEP - GAME_TILE_GAP
+    const cx = BOARD_OFFSET_X + bw / 2
+    const cy = BOARD_OFFSET_Y + bw / 2
+
+    this._thinkingOverlay = this.add.container(cx, cy).setDepth(15).setVisible(false)
+
+    // dark backdrop
+    this._thinkingOverlay.add(
+      this.add.rectangle(0, 0, 180, 140, 0x000000, 0.78)
+    )
+
+    // full dim circle (track)
+    const track = this.add.graphics().setPosition(0, -14)
+    track.lineStyle(7, 0x222244, 1)
+    track.strokeCircle(0, 0, 38)
+    this._thinkingOverlay.add(track)
+
+    // 3/4 arc spinner arm
+    this._spinnerGraphics = this.add.graphics().setPosition(0, -14)
+    this._spinnerGraphics.lineStyle(7, 0xf0c040, 1)
+    this._spinnerGraphics.beginPath()
+    this._spinnerGraphics.arc(0, 0, 38, -Math.PI / 2, Math.PI, false)
+    this._spinnerGraphics.strokePath()
+    this._thinkingOverlay.add(this._spinnerGraphics)
+
+    // label below spinner
+    this._thinkingOverlay.add(
+      this.add.text(0, 46, 'CPU myśli...', {
+        fontSize: '16px', color: '#f0c040', fontFamily: 'monospace'
+      }).setOrigin(0.5)
+    )
   }
 
   _showThinking(visible) {
-    this._thinkingLabel.setVisible(visible)
+    this._thinkingOverlay.setVisible(visible)
     if (visible) {
-      this._thinkDots = 0
-      this._thinkTimer = this.time.addEvent({
-        delay: 400,
-        loop: true,
-        callback: () => {
-          this._thinkDots = (this._thinkDots + 1) % 4
-          this._thinkingLabel.setText('CPU thinking' + '.'.repeat(this._thinkDots))
-        }
+      this._spinTween = this.tweens.add({
+        targets: this._spinnerGraphics,
+        angle: 360,
+        duration: 900,
+        repeat: -1,
+        ease: 'Linear'
       })
-    } else if (this._thinkTimer) {
-      this._thinkTimer.remove()
-      this._thinkTimer = null
+    } else {
+      if (this._spinTween) {
+        this._spinTween.remove()
+        this._spinTween = null
+      }
+      this._spinnerGraphics.setAngle(0)
     }
   }
 
