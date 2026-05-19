@@ -11,6 +11,7 @@ const config = {
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#1a1a2e',
+  dom: { createContainer: true },
   scene: [BootScene, PreloadScene, MenuScene, GameScene, ResultScene]
 }
 

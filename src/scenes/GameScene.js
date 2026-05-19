@@ -27,8 +27,10 @@ export default class GameScene extends Phaser.Scene {
   constructor() { super({ key: 'GameScene' }) }
 
   init(data) {
-    this.mode  = data.mode  || 'pvp'
-    this.depth = data.depth || 1
+    this.mode   = data.mode   || 'pvp'
+    this.depth  = data.depth  || 1
+    this.p1Name = data.p1Name || 'Gracz 1'
+    this.p2Name = data.p2Name || (data.mode === 'pvc' ? 'CPU' : 'Gracz 2')
   }
 
   create() {
@@ -79,15 +81,14 @@ export default class GameScene extends Phaser.Scene {
   }
 
   _updateScoreBar() {
-    const p2Name = this.mode === 'pvc' ? 'CPU' : 'P2'
-    this.p1Label.setText(`P1: ${this.p1Score}`)
-    this.p2Label.setText(`${p2Name}: ${this.p2Score}`)
+    this.p1Label.setText(`${this.p1Name}: ${this.p1Score}`)
+    this.p2Label.setText(`${this.p2Name}: ${this.p2Score}`)
 
     const stateText = {
-      [STATE.P1_TURN]:    '► P1 picks a ROW tile',
-      [STATE.P2_TURN]:    `► ${p2Name} picks a COLUMN tile`,
-      [STATE.AI_THINKING]:'► CPU is thinking...',
-      [STATE.GAME_OVER]:  'Game Over'
+      [STATE.P1_TURN]:    `► ${this.p1Name} wybiera kafelek w RZĘDZIE`,
+      [STATE.P2_TURN]:    `► ${this.p2Name} wybiera kafelek w KOLUMNIE`,
+      [STATE.AI_THINKING]:`► ${this.p2Name} myśli...`,
+      [STATE.GAME_OVER]:  'Koniec gry'
     }
     this.turnLabel.setText(stateText[this.state] || '')
   }
@@ -305,7 +306,9 @@ export default class GameScene extends Phaser.Scene {
       this.scene.start('ResultScene', {
         p1Score: this.p1Score,
         p2Score: this.p2Score,
-        mode: this.mode
+        p1Name:  this.p1Name,
+        p2Name:  this.p2Name,
+        mode:    this.mode
       })
     })
   }
