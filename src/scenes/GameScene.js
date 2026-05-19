@@ -197,7 +197,7 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
-  // ── Thinking overlay (spinner) ─────────────────────────────────────────────
+  // ── Thinking overlay ───────────────────────────────────────────────────────
 
   _buildThinkingOverlay() {
     const bw = BOARD_SIZE * STEP - GAME_TILE_GAP
@@ -205,51 +205,16 @@ export default class GameScene extends Phaser.Scene {
     const cy = BOARD_OFFSET_Y + bw / 2
 
     this._thinkingOverlay = this.add.container(cx, cy).setDepth(15).setVisible(false)
-
-    // dark backdrop
+    this._thinkingOverlay.add(this.add.rectangle(0, 0, 220, 54, 0x000000, 0.80))
     this._thinkingOverlay.add(
-      this.add.rectangle(0, 0, 180, 140, 0x000000, 0.78)
-    )
-
-    // full dim circle (track)
-    const track = this.add.graphics().setPosition(0, -14)
-    track.lineStyle(7, 0x222244, 1)
-    track.strokeCircle(0, 0, 38)
-    this._thinkingOverlay.add(track)
-
-    // 3/4 arc spinner arm
-    this._spinnerGraphics = this.add.graphics().setPosition(0, -14)
-    this._spinnerGraphics.lineStyle(7, 0xf0c040, 1)
-    this._spinnerGraphics.beginPath()
-    this._spinnerGraphics.arc(0, 0, 38, -Math.PI / 2, Math.PI, false)
-    this._spinnerGraphics.strokePath()
-    this._thinkingOverlay.add(this._spinnerGraphics)
-
-    // label below spinner
-    this._thinkingOverlay.add(
-      this.add.text(0, 46, 'CPU myśli...', {
-        fontSize: '16px', color: '#f0c040', fontFamily: 'monospace'
+      this.add.text(0, 0, 'CPU myśli...', {
+        fontSize: '22px', color: '#f0c040', fontFamily: 'monospace', fontStyle: 'bold'
       }).setOrigin(0.5)
     )
   }
 
   _showThinking(visible) {
     this._thinkingOverlay.setVisible(visible)
-    if (visible) {
-      this._spinTween = this.tweens.add({
-        targets: this._spinnerGraphics,
-        angle: 360,
-        duration: 900,
-        repeat: -1,
-        ease: 'Linear'
-      })
-    } else {
-      if (this._spinTween) {
-        this._spinTween.remove()
-        this._spinTween = null
-      }
-      this._spinnerGraphics.setAngle(0)
-    }
   }
 
   // ── Tile click handler ─────────────────────────────────────────────────────
