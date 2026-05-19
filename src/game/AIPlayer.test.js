@@ -46,14 +46,14 @@ describe('getBestMove', () => {
     expect([0, 6, 9]).toContain(move.row)
   })
 
-  it('depth 4 still returns a valid row', () => {
+  it('depth 5 still returns a valid row', () => {
     const data = makeGrid({
       '1,1': 5, '3,1': -2, '6,1': 8,
       '2,6': 3, '4,6': 1,
       '0,3': 4, '5,3': 7
     })
     const board = new Board(data)
-    const move = getBestMove(board, 1, 4)
+    const move = getBestMove(board, 1, 5)
     expect(move).not.toBeNull()
     expect(typeof move.row).toBe('number')
   })

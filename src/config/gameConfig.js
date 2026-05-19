@@ -17,6 +17,6 @@ export const DEFAULT_P2_NAME = 'Dżejsiczka'
 // CPU character names per difficulty depth
 export const CPU_NAMES = {
   2: 'Blamaż',   // easy
-  4: 'Cwaniak',  // medium
-  6: 'Tytan'     // hard
+  5: 'Cwaniak',  // medium
+  9: 'Tytan'     // hard
 }

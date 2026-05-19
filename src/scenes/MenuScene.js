@@ -147,13 +147,13 @@ export default class MenuScene extends Phaser.Scene {
 
     const diffs = [
       { depth: 2, x: -110 },
-      { depth: 4, x: 0    },
-      { depth: 6, x: 110  }
+      { depth: 5, x: 0    },
+      { depth: 9, x: 110  }
     ]
 
     for (const d of diffs) {
       const cpuName   = CPU_NAMES[d.depth]
-      const diffLabel = d.depth === 2 ? 'Easy' : d.depth === 4 ? 'Medium' : 'Hard'
+      const diffLabel = d.depth === 2 ? 'Easy' : d.depth === 5 ? 'Medium' : 'Hard'
 
       const btn = this.add.rectangle(d.x, 8, 96, 58, 0x334466)
         .setInteractive({ useHandCursor: true })
