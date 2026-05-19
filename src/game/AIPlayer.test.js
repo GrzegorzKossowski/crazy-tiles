@@ -46,15 +46,22 @@ describe('getBestMove', () => {
     expect([0, 6, 9]).toContain(move.row)
   })
 
-  it('depth 3 still returns a valid row', () => {
+  it('depth 5 still returns a valid row', () => {
     const data = makeGrid({
       '1,1': 5, '3,1': -2, '6,1': 8,
       '2,6': 3, '4,6': 1,
       '0,3': 4, '5,3': 7
     })
     const board = new Board(data)
-    const move = getBestMove(board, 1, 3)
+    const move = getBestMove(board, 1, 5)
     expect(move).not.toBeNull()
     expect(typeof move.row).toBe('number')
+  })
+
+  it('depth 1: does not pick a negative tile when a positive one is available', () => {
+    const data = makeGrid({ '0,7': -5, '3,7': 4, '8,7': -1 })
+    const board = new Board(data)
+    const move = getBestMove(board, 7, 1)
+    expect(move.row).toBe(3) // only positive tile
   })
 })
